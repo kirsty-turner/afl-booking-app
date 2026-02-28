@@ -10,7 +10,11 @@ function generateSlots(coach) {
   return Array.from({ length: coach.maxSlots }, (_, i) => {
     const s = coach.startHour * 60 + coach.startMin + i * coach.slotMinutes;
     const e = s + coach.slotMinutes;
-    const fmt = t => `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+    const fmt = t => {
+      let h = Math.floor(t / 60), m = t % 60, ampm = h >= 12 ? "pm" : "am";
+      h = h % 12 || 12;
+      return h + ":" + String(m).padStart(2, "0") + ampm;
+    };
     return { id: `${coach.id}_${i}`, time: fmt(s), timeRange: `${fmt(s)}–${fmt(e)}` };
   });
 }
@@ -87,7 +91,7 @@ export default function App() {
         <div style={{ maxWidth: 680, margin: "0 auto", padding: "26px 0 22px", position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 50, height: 50, borderRadius: 14, background: "#F5C800", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>🏉</div>
+              <div style={{ width: 50, height: 50, borderRadius: 14, background: "#F5C800", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>🐯</div>
               <div>
                 <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 30, color: "#fff", letterSpacing: 3, lineHeight: 1 }}>COACH SESSIONS</div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#777", marginTop: 4, letterSpacing: 1.5 }}>BOOK YOUR 1-ON-1 · MARCH 2025</div>
@@ -254,7 +258,7 @@ export default function App() {
         {/* ══ CONFIRM ══ */}
         {view === "book" && confirming && selectedSlot && (
           <div className="fade-in" style={{ background: "#fff", borderRadius: 20, padding: "30px 24px", maxWidth: 380, margin: "0 auto", boxShadow: "0 8px 40px rgba(0,0,0,0.1)" }}>
-            <div style={{ width: 52, height: 52, borderRadius: 14, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 20 }}>🏉</div>
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 20 }}>🐯</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 2.5, color: "#bbb", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Confirm Your Booking</div>
             <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 28, color: "#1a1a1a", letterSpacing: 1.5, marginBottom: 4 }}>{selectedSlot.coachName}</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#aaa", marginBottom: 26 }}>{selectedSlot.timeRange} · {selectedSlot.date}</div>
