@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 const COACHES = [
   { id: "trin",  name: "Trin",  date: "Tuesday 10th March",   color: "#1a1a1a", accent: "#F5C800", startHour: 16, startMin: 30, slotMinutes: 15, maxSlots: 7,  initial: "T" },
   { id: "milly", name: "Milly", date: "Wednesday 11th March", color: "#2d2d2d", accent: "#F5C800", startHour: 16, startMin: 30, slotMinutes: 15, maxSlots: 7,  initial: "M" },
-  { id: "grace", name: "Grace", date: "Wednesday 11th March", color: "#222222", accent: "#F5C800", startHour: 18, startMin:  0, slotMinutes: 10, maxSlots: 6,  initial: "G" },
+  { id: "grace_tue", name: "Grace", date: "Tuesday 10th March",   color: "#222222", accent: "#F5C800", startHour: 18, startMin:  0, slotMinutes: 10, maxSlots: 3,  initial: "G" },
+  { id: "grace_wed", name: "Grace", date: "Wednesday 11th March", color: "#222222", accent: "#F5C800", startHour: 18, startMin:  0, slotMinutes: 10, maxSlots: 3,  initial: "G" },
 ];
 
 function generateSlots(coach) {
@@ -112,7 +113,7 @@ export default function App() {
           </div>
           {/* Date pills */}
           <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
-            {[{ d: "TUE 10 MARCH", s: "Trin · 4:30–6pm" }, { d: "WED 11 MARCH", s: "Milly 4:30–6pm · Grace 6–7pm" }].map((x, i) => (
+            {[{ d: "TUE 10 MARCH", s: "Trin 4:30–6pm · Grace 6pm" }, { d: "WED 11 MARCH", s: "Milly 4:30–6pm · Grace 6pm" }].map((x, i) => (
               <div key={i} style={{ background: "#242424", borderRadius: 8, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#F5C800", flexShrink: 0 }} />
                 <div>
@@ -211,12 +212,25 @@ export default function App() {
             <p style={{ fontFamily: "'DM Sans', sans-serif", color: "#aaa", fontSize: 13, margin: "0 0 22px", lineHeight: 1.6 }}>
               Tap an available slot to lock in your session. Your name will show once booked. 👇
             </p>
-            {COACHES.map((coach, ci) => {
+            {[
+              { label: "Tuesday 10th March", coaches: COACHES.filter(c => c.date === "Tuesday 10th March") },
+              { label: "Wednesday 11th March", coaches: COACHES.filter(c => c.date === "Wednesday 11th March") },
+            ].map((day, di) => (
+              <div key={day.label} style={{ marginBottom: 32 }}>
+                {/* Day header */}
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                  <div style={{ background: "#1a1a1a", borderRadius: 8, padding: "6px 14px", display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F5C800", flexShrink: 0 }} />
+                    <span style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 16, color: "#F5C800", letterSpacing: 2 }}>{day.label}</span>
+                  </div>
+                  <div style={{ flex: 1, height: 1, background: "#e8e8e8" }} />
+                </div>
+                {day.coaches.map((coach, ci) => {
               const slots = generateSlots(coach);
               const coachBooked = slots.filter(s => bookings[s.id]).length;
               const spotsLeft = coach.maxSlots - coachBooked;
               return (
-                <div key={coach.id} className="fade-in" style={{ marginBottom: 20, background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", animationDelay: `${ci * 0.08}s` }}>
+                <div key={coach.id} className="fade-in" style={{ marginBottom: 14, background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", animationDelay: `${ci * 0.08}s` }}>
                   <div style={{ background: "#1a1a1a", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 46, height: 46, borderRadius: 12, background: "#F5C800", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Bebas Neue', cursive", fontSize: 24, color: "#1a1a1a", flexShrink: 0 }}>
@@ -252,6 +266,8 @@ export default function App() {
                 </div>
               );
             })}
+              </div>
+            ))}
           </div>
         )}
 
@@ -284,4 +300,5 @@ export default function App() {
       </div>
     </div>
   );
+}
 }
