@@ -1,5 +1,30 @@
 import { useState, useEffect } from "react";
 
+const SUPABASE_URL = "https://putnyaojldjmctwgfdas.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1dG55YW9qbGRqbWN0d2dmZGFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTAxNzEsImV4cCI6MjA4ODUyNjE3MX0.cAdWuTexw4Q34xhm_8clVXmc_PZDdwer4gouCxfjIOs";
+
+const supabase = {
+  async getBookings() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.ok ? res.json() : [];
+  },
+  async upsert(slotId, name) {
+    await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates" },
+      body: JSON.stringify({ slot_id: slotId, name, booked_at: new Date().toISOString() })
+    });
+  },
+  async remove(slotId) {
+    await fetch(`${SUPABASE_URL}/rest/v1/bookings?slot_id=eq.${slotId}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+  }
+};
+
 const COACHES = [
   { id: "trin",  name: "Trin",  date: "Tuesday 10th March",   color: "#1a1a1a", accent: "#F5C800", startHour: 16, startMin: 30, slotMinutes: 15, maxSlots: 7,  initial: "T" },
   { id: "milly", name: "Milly", date: "Wednesday 11th March", color: "#2d2d2d", accent: "#F5C800", startHour: 16, startMin: 30, slotMinutes: 15, maxSlots: 7,  initial: "M" },
@@ -36,38 +61,37 @@ export default function App() {
   const [saving, setSaving]               = useState(false);
 
   useEffect(() => {
+    loadBookings();
+    // Poll every 10 seconds so bookings stay in sync across devices
+    const interval = setInterval(loadBookings, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  async function loadBookings() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setBookings(JSON.parse(saved));
+      const rows = await supabase.getBookings();
+      const map = {};
+      rows.forEach(r => { map[r.slot_id] = { name: r.name, bookedAt: r.booked_at }; });
+      setBookings(map);
     } catch {}
-  }, []);
-
-  useEffect(() => {
-    function onStorage(e) {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try { setBookings(JSON.parse(e.newValue)); } catch {}
-      }
-    }
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-  function persist(nb) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(nb)); } catch {}
   }
 
-  function handleBook() {
+  function persist(nb) {
+    // no-op, Supabase handles persistence
+  }
+
+  async function handleBook() {
     if (!playerName.trim() || !selectedSlot || saving) return;
     setSaving(true);
-    const nb = { ...bookings, [selectedSlot.slotId]: { name: playerName.trim(), bookedAt: new Date().toISOString() } };
-    setBookings(nb); persist(nb);
+    await supabase.upsert(selectedSlot.slotId, playerName.trim());
+    await loadBookings();
     setSuccess({ ...selectedSlot, name: playerName.trim() });
     setSelectedSlot(null); setPlayerName(""); setConfirming(false); setSaving(false);
   }
 
-  function handleRemove(slotId) {
-    const nb = { ...bookings }; delete nb[slotId];
-    setBookings(nb); persist(nb);
+  async function handleRemove(slotId) {
+    await supabase.remove(slotId);
+    await loadBookings();
   }
 
   const totalBooked = Object.keys(bookings).length;
@@ -167,7 +191,7 @@ export default function App() {
                 <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 22, letterSpacing: 2 }}>
                   ALL BOOKINGS <span style={{ color: "#F5C800" }}>{totalBooked}/{totalSlots}</span>
                 </div>
-                <button onClick={() => { if (window.confirm("Clear ALL bookings? This cannot be undone.")) { setBookings({}); localStorage.removeItem(STORAGE_KEY); } }}
+                <button onClick={async () => { if (window.confirm("Clear ALL bookings? This cannot be undone.")) { const keys = Object.keys(bookings); for (const k of keys) await supabase.remove(k); await loadBookings(); } }}
                   style={{ background: "none", border: "1.5px solid #e0e0e0", borderRadius: 8, color: "#bbb", cursor: "pointer", fontSize: 12, padding: "6px 12px", fontFamily: "'DM Sans', sans-serif" }}>
                   Clear All
                 </button>
